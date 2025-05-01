@@ -1,13 +1,25 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState(new Array(6).fill(""));
   const [timer, setTimer] = useState(60);
   const [isTimerActive, setIsTimerActive] = useState(true);
+  const [error, setError] = useState("");
   const inputRefs = useRef([]);
+  const { verifyEmail, resetPassword, resendVerification, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const email = location.state?.email || "";
+  const isPasswordReset = location.state?.resetPassword || false;
 
   useEffect(() => {
+    if (!email) {
+      navigate("/login");
+    }
+
     let interval = null;
     if (isTimerActive && timer > 0) {
       interval = setInterval(() => {
@@ -18,14 +30,19 @@ const OTPVerification = () => {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isTimerActive, timer]);
+  }, [isTimerActive, timer, email, navigate]);
 
-  const resendOTP = () => {
-    setTimer(60);
-    setIsTimerActive(true);
-    setOtp(new Array(6).fill(""));
-    if (inputRefs.current[0]) {
-      inputRefs.current[0].focus();
+  const resendOTP = async () => {
+    try {
+      await resendVerification(email);
+      setTimer(60);
+      setIsTimerActive(true);
+      setOtp(new Array(6).fill(""));
+      if (inputRefs.current[0]) {
+        inputRefs.current[0].focus();
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to resend code");
     }
   };
 
@@ -65,13 +82,33 @@ const OTPVerification = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const joinedOtp = otp.join("");
-    if (joinedOtp.length === 6) {
-      alert(`OTP Submitted: ${joinedOtp}`);
-    } else {
-      alert("Please enter a complete OTP");
+
+    if (joinedOtp.length !== 6) {
+      setError("Please enter a complete 6-digit code");
+      return;
+    }
+
+    setError("");
+
+    try {
+      if (isPasswordReset) {
+        navigate("/reset-password", {
+          state: {
+            email,
+            otp: joinedOtp,
+          },
+        });
+      } else {
+        const response = await verifyEmail({ email, otp: joinedOtp });
+        if (response.success) {
+          navigate("/");
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Verification failed");
     }
   };
 
@@ -101,15 +138,19 @@ const OTPVerification = () => {
               </div>
             </div>
             <h2 className="mt-4 text-xl font-bold text-indigo-700">
-              Verification Code
+              {isPasswordReset ? "Reset Password" : "Verify Your Email"}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               We've sent a code to{" "}
-              <span className="font-medium text-indigo-600">
-                user@example.com
-              </span>
+              <span className="font-medium text-indigo-600">{email}</span>
             </p>
           </div>
+
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+              {error}
+            </div>
+          )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="flex justify-center gap-2 sm:gap-4">
@@ -154,9 +195,12 @@ const OTPVerification = () => {
 
             <button
               type="submit"
-              className="w-full py-3 text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+              disabled={loading}
+              className={`w-full py-3 text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 ${
+                loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+              }`}
             >
-              Verify Code
+              {loading ? "Processing..." : "Verify Code"}
             </button>
 
             <div className="text-center pt-2">

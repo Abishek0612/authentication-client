@@ -1,14 +1,17 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { forgotPassword, loading } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!email) {
       setError("Please enter your email address");
       return;
@@ -20,25 +23,36 @@ const ForgotPassword = () => {
       return;
     }
 
-    setIsLoading(true);
     setError("");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      setIsSubmitted(true);
+      const response = await forgotPassword(email);
+      if (response.success) {
+        setIsSubmitted(true);
+      }
     } catch (err) {
-      setError("Something went wrong. Please try again later.");
-    } finally {
-      setIsLoading(false);
+      setError(
+        err.response?.data?.message ||
+          "Something went wrong. Please try again later."
+      );
     }
+  };
+
+  const handleResetClick = () => {
+    navigate("/otp-verification", {
+      state: {
+        email,
+        resetPassword: true,
+      },
+    });
   };
 
   return (
     <div className="flex flex-col flex-grow items-center justify-center min-h-[80vh] ">
-      <div className="max-w-md w-full space-y-8 from-indigo-500 to-blue-100 p-6 sm:p-10 rounded-xl shadow-lg">
+      <div className="max-w-md w-full space-y-8 bg-white p-6 sm:p-10 rounded-xl shadow-lg">
         <div className="text-center">
           <div className="flex justify-center">
-            <div className="h-16 w-16 bg-blue-800 rounded-full flex items-center justify-center">
+            <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-8 w-8 text-blue-600"
@@ -99,14 +113,14 @@ const ForgotPassword = () => {
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={loading}
                 className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white ${
-                  isLoading
+                  loading
                     ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
                 } transition duration-150 ease-in-out`}
               >
-                {isLoading ? (
+                {loading ? (
                   <span className="flex items-center">
                     <svg
                       className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
@@ -163,8 +177,14 @@ const ForgotPassword = () => {
               </div>
             </div>
             <button
+              onClick={handleResetClick}
+              className="w-full flex justify-center py-3 px-4 border border-blue-300 rounded-lg shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+            >
+              Continue to OTP Verification
+            </button>
+            <button
               onClick={() => setIsSubmitted(false)}
-              className="w-full flex justify-center py-3 px-4 border border-blue-300 rounded-lg shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="w-full flex justify-center py-3 px-4 border border-blue-300 rounded-lg shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
             >
               Try a different email
             </button>
@@ -174,7 +194,7 @@ const ForgotPassword = () => {
         <div className="text-center mt-4">
           <Link
             to="/login"
-            className="text-sm font-medium text-blue-600 hover:text-blue-500"
+            className="text-sm font-medium text-blue-600 hover:text-blue-500 cursor-pointer"
           >
             Back to login
           </Link>
