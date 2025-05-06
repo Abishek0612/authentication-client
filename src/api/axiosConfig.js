@@ -1,5 +1,4 @@
 import axios from "axios";
-
 import { getAccessToken, clearTokens } from "../utils/tokenStorage";
 
 const API_URL = "http://localhost:5000/api";
@@ -28,7 +27,12 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/auth/login") &&
+      !originalRequest.url.includes("/auth/register")
+    ) {
       originalRequest._retry = true;
 
       try {
@@ -48,8 +52,8 @@ axiosInstance.interceptors.response.use(
 
           return axiosInstance(originalRequest);
         }
-        // eslint-disable-next-line no-unused-vars
       } catch (refreshError) {
+        console.error("Token refresh failed:", refreshError);
         clearTokens();
       }
     }

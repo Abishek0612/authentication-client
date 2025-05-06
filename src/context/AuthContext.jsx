@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 import authService from "../api/authService";
 import userService from "../api/userService";
@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const loadUser = async () => {
@@ -47,7 +48,6 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  // Register a new user
   const register = async (userData) => {
     try {
       setError(null);
@@ -57,15 +57,12 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (err) {
       setLoading(false);
-
       const errorMessage = err.response?.data?.message || "Registration failed";
       setError(errorMessage);
-
       throw new Error(errorMessage);
     }
   };
 
-  // Verify email with OTP
   const verifyEmail = async (verificationData) => {
     try {
       setError(null);
@@ -92,7 +89,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login user
   const login = async (credentials) => {
     try {
       setError(null);
@@ -104,7 +100,6 @@ export const AuthProvider = ({ children }) => {
           const userResponse = await userService.getCurrentUser();
           if (userResponse.success) {
             setCurrentUser(userResponse.data);
-
             const from = location.state?.from?.pathname || "/dashboard";
             navigate(from);
           }
@@ -117,12 +112,12 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || "Login failed");
+      const errorMessage = err.response?.data?.message || "Login failed";
+      setError(errorMessage);
       throw err;
     }
   };
 
-  // Logout user
   const logout = async () => {
     try {
       setLoading(true);
@@ -140,7 +135,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Forgot password
   const forgotPassword = async (email) => {
     try {
       setError(null);
@@ -155,7 +149,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Reset password
   const resetPassword = async (resetData) => {
     try {
       setError(null);
@@ -170,7 +163,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Resend verification email
   const resendVerification = async (email) => {
     try {
       setError(null);
@@ -185,7 +177,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update user profile
   const updateProfile = async (profileData) => {
     try {
       setError(null);
@@ -217,6 +208,7 @@ export const AuthProvider = ({ children }) => {
     resendVerification,
     updateProfile,
   };
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

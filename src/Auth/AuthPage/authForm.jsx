@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import PropTypes from "prop-types";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
@@ -11,14 +11,8 @@ const AuthForm = ({ isLogin, toggleForm }) => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { login, register, loading, error: authError } = useAuth();
+  const { login, register, loading } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (authError) {
-      setError(authError);
-    }
-  }, [authError]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,17 +32,15 @@ const AuthForm = ({ isLogin, toggleForm }) => {
       if (isLogin) {
         await login({ email, password });
       } else {
-        try {
-          const response = await register({ name, email, password });
-          if (response.success) {
-            navigate("/otp-verification", { state: { email } });
-          }
-        } catch (err) {
-          setError(err.message || "Registration failed");
+        const response = await register({ name, email, password });
+        if (response.success) {
+          navigate("/otp-verification", { state: { email } });
         }
       }
     } catch (err) {
-      console.error("Authentication error:", err);
+      const errorMessage =
+        err.response?.data?.message || err.message || "Authentication failed";
+      setError(errorMessage);
     }
   };
 
@@ -246,6 +238,7 @@ const AuthPage = () => {
 
   return <AuthForm isLogin={isLogin} toggleForm={() => setIsLogin(!isLogin)} />;
 };
+
 AuthForm.propTypes = {
   isLogin: PropTypes.bool.isRequired,
   toggleForm: PropTypes.func.isRequired,
