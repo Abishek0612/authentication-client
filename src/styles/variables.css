@@ -1,0 +1,28 @@
+:root {
+  /* Primary colors */
+  --color-purple: #7950bc;
+  --color-green: #39a065;
+  --color-yellow: #fcb638;
+  --color-dark-purple: #543195;
+
+  /* Neutrals */
+  --color-black: #000000;
+  --color-dark-gray: #292e33;
+  --color-gray: #808894;
+  --color-light-gray: #dce4f1;
+  --color-white: #ffffff;
+
+  /* Theme-specific variables */
+  --color-background: var(--color-white);
+  --color-text: var(--color-black);
+  --color-primary: var(--color-purple);
+  --color-secondary: var(--color-green);
+  --color-accent: var(--color-yellow);
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --color-background: var(--color-black);
+  --color-text: var(--color-white);
+  --color-primary: var(--color-purple);
+}

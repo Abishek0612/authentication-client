@@ -9,7 +9,7 @@ const DashboardPage = () => {
 
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-semibold text-indigo-700 mb-4">
-          Welcome, {currentUser?.name}!
+          Welcome, {currentUser?.firstName || "User"}!
         </h2>
         <p className="text-gray-600">
           This is your personal dashboard. More features will be added soon.

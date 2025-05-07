@@ -1,47 +1,69 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import logo from "../../assets/logo.png";
 
-const AuthPage = () => {
-  const [email, setEmail] = useState("");
+const FirstTimePassword = () => {
+  const { changeFirstTimePassword, loading, isFirstLogin, currentUser } =
+    useAuth();
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading } = useAuth();
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (currentUser && isFirstLogin === false) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [currentUser, isFirstLogin, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
-    if (!email || !password) {
-      setError("Please fill in all required fields");
+    if (!password || !confirmPassword) {
+      setError("Please fill in all fields");
       return;
     }
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+
+    setError("");
+
     try {
-      await login({ email, password });
+      const response = await changeFirstTimePassword(password);
+      if (response.success) {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err) {
-      const errorMessage =
-        err.response?.data?.message || err.message || "Authentication failed";
-      setError(errorMessage);
+      setError(err.response?.data?.message || "Password change failed");
     }
   };
 
   return (
     <div className="flex h-screen bg-[var(--color-dark-gray)]">
+      {/* Left panel - Password form */}
       <div className="w-full lg:w-1/2 bg-white p-12 flex items-center justify-center">
         <div className="w-full max-w-md">
+          {/* Logo */}
           <div className="mb-8">
             <img src={logo} alt="logo" className="h-8" />
           </div>
 
           <h1 className="text-2xl font-bold text-[var(--color-dark-gray)] mb-1">
-            Log in to your account
+            Set New Password
           </h1>
           <p className="text-sm text-[var(--color-gray)] mb-8">
-            Please enter your details.
+            Since this is your first time logging in, please set a new password
           </p>
 
           {error && (
@@ -53,28 +75,10 @@ const AuthPage = () => {
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label
-                htmlFor="email"
-                className="block text-sm font-medium text-[var(--color-gray)] mb-1"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="mb-6">
-              <label
                 htmlFor="password"
                 className="block text-sm font-medium text-[var(--color-gray)] mb-1"
               >
-                Password
+                New Password
               </label>
               <div className="relative">
                 <input
@@ -132,28 +136,67 @@ const AuthPage = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-[var(--color-primary)] focus:ring-[var(--color-primary)] border-gray-300 rounded"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-[var(--color-gray)]"
-                >
-                  Remember me for 30 days
-                </label>
-              </div>
-              <Link
-                to="/forgot-password"
-                className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-dark-purple)]"
+            <div className="mb-6">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-[var(--color-gray)] mb-1"
               >
-                Forgot password?
-              </Link>
+                Confirm Password
+              </label>
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-gray-500 hover:text-gray-700"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-gray-500 hover:text-gray-700"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             <button
@@ -161,18 +204,19 @@ const AuthPage = () => {
               disabled={loading}
               className="w-full py-3 px-4 bg-[#4285F4] hover:bg-[#3367d6] text-white rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] transition"
             >
-              {loading ? "Signing in..." : "Login"}
+              {loading ? "Processing..." : "Set Password"}
             </button>
           </form>
         </div>
       </div>
 
+      {/* Right panel  */}
       <div className="hidden lg:block lg:w-1/2 bg-[#1a237e] text-white p-12 relative overflow-hidden">
         <div className="relative z-10 h-full flex flex-col justify-center">
           <h2 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
-            Turn Clicks
+            Secure Your
             <br />
-            Into Customers
+            Account
             <br />
             <span className="font-light">Effortlessly</span>
           </h2>
@@ -192,13 +236,13 @@ const AuthPage = () => {
               ))}
             </div>
             <p className="text-sm mb-4">
-              The robust security measures of Nomo give us peace of mind. We
-              trust the platform to safeguard our project data, ensuring
-              confidentiality and compliance with data protection standards.
+              Strong passwords are essential for security. Our system ensures
+              your data stays protected while giving you easy access to all of
+              your important information.
             </p>
             <div className="text-sm">
-              <p className="font-medium">Shadi Elson</p>
-              <p className="text-blue-200">IT Project Lead</p>
+              <p className="font-medium">Security Team</p>
+              <p className="text-blue-200">Data Protection</p>
             </div>
           </div>
         </div>
@@ -213,4 +257,4 @@ const AuthPage = () => {
   );
 };
 
-export default AuthPage;
+export default FirstTimePassword;

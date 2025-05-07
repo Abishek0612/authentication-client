@@ -3,7 +3,8 @@ import { useAuth } from "../hooks/useAuth";
 
 const ProfilePage = () => {
   const { currentUser, updateProfile, loading } = useAuth();
-  const [name, setName] = useState(currentUser?.name || "");
+  const [firstName, setFirstName] = useState(currentUser?.firstName || "");
+  const [lastName, setLastName] = useState(currentUser?.lastName || "");
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -13,13 +14,13 @@ const ProfilePage = () => {
     setError("");
     setSuccessMessage("");
 
-    if (!name.trim()) {
-      setError("Name cannot be empty");
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First name and last name cannot be empty");
       return;
     }
 
     try {
-      await updateProfile({ name });
+      await updateProfile({ firstName, lastName });
       setSuccessMessage("Profile updated successfully");
       setIsEditing(false);
     } catch (err) {
@@ -61,12 +62,24 @@ const ProfilePage = () => {
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                   <label className="block text-gray-700 font-medium mb-2">
-                    Name
+                    First Name
                   </label>
                   <input
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-medium mb-2">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -83,7 +96,8 @@ const ProfilePage = () => {
                     type="button"
                     onClick={() => {
                       setIsEditing(false);
-                      setName(currentUser.name);
+                      setFirstName(currentUser.firstName);
+                      setLastName(currentUser.lastName);
                     }}
                     className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition"
                   >
@@ -95,8 +109,17 @@ const ProfilePage = () => {
               <div>
                 <div className="flex justify-between items-center py-3 border-b">
                   <div>
-                    <span className="text-gray-500 font-medium">Name</span>
-                    <p className="text-gray-900">{currentUser.name}</p>
+                    <span className="text-gray-500 font-medium">
+                      First Name
+                    </span>
+                    <p className="text-gray-900">{currentUser.firstName}</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center py-3 border-b">
+                  <div>
+                    <span className="text-gray-500 font-medium">Last Name</span>
+                    <p className="text-gray-900">{currentUser.lastName}</p>
                   </div>
                   <button
                     onClick={() => setIsEditing(true)}
@@ -111,11 +134,18 @@ const ProfilePage = () => {
                   <p className="text-gray-900">{currentUser.email}</p>
                 </div>
 
+                <div className="py-3 border-b">
+                  <span className="text-gray-500 font-medium">Role</span>
+                  <p className="text-gray-900">{currentUser.role}</p>
+                </div>
+
                 <div className="py-3">
                   <span className="text-gray-500 font-medium">
-                    Account Status
+                    Organization
                   </span>
-                  <p className="text-green-600 font-medium">Verified</p>
+                  <p className="text-green-600 font-medium">
+                    {currentUser.organization ? "Connected" : "None"}
+                  </p>
                 </div>
               </div>
             )}

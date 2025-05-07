@@ -1,4 +1,6 @@
 const ACCESS_TOKEN_KEY = "access_token";
+const FIRST_LOGIN_KEY = "is_first_login";
+const USER_ID_KEY = "user_id";
 
 export const getAccessToken = () => {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -12,12 +14,41 @@ export const setAccessToken = (accessToken) => {
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
 };
 
-export const setTokens = (accessToken) => {
-  setAccessToken(accessToken);
+export const getIsFirstLogin = () => {
+  return localStorage.getItem(FIRST_LOGIN_KEY) === "true";
+};
+
+export const setIsFirstLogin = (isFirstLogin) => {
+  localStorage.setItem(FIRST_LOGIN_KEY, isFirstLogin.toString());
+};
+
+export const setTempUserData = (userId, isFirstLogin = true) => {
+  if (userId) {
+    localStorage.setItem(USER_ID_KEY, userId);
+  }
+  setIsFirstLogin(isFirstLogin);
+};
+
+export const getTempUserId = () => {
+  return localStorage.getItem(USER_ID_KEY);
+};
+
+export const setTokens = (authData) => {
+  if (!authData) return;
+
+  if (authData.accessToken) {
+    setAccessToken(authData.accessToken);
+  }
+
+  if (authData.userId) {
+    setTempUserData(authData.userId, authData.isFirstLogin);
+  }
 };
 
 export const clearTokens = () => {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(USER_ID_KEY);
+  localStorage.removeItem(FIRST_LOGIN_KEY);
 };
 
 export const isAuthenticated = () => {
@@ -62,4 +93,12 @@ export const getUserIdFromToken = () => {
 
   const payload = parseToken(token);
   return payload?.userId || null;
+};
+
+export const resetAppState = () => {
+  clearTokens();
+
+  localStorage.clear();
+
+  window.location.href = "/login";
 };

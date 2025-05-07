@@ -8,7 +8,7 @@ const OTPVerification = () => {
   const [isTimerActive, setIsTimerActive] = useState(true);
   const [error, setError] = useState("");
   const inputRefs = useRef([]);
-  const { verifyEmail, resetPassword, resendVerification, loading } = useAuth();
+  const { verifyEmail, resendVerification, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
