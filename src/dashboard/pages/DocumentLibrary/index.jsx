@@ -82,7 +82,7 @@ const DocumentLibrary = () => {
         </h2>
         <button
           onClick={() => setShowUploadModal(true)}
-          className="bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] text-white px-4 py-2 rounded-lg flex items-center"
+          className="bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] text-white px-4 py-2 rounded-lg flex items-center cursor-pointer"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
