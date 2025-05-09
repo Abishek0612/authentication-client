@@ -1,14 +1,18 @@
 import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import ResetPassword from "./Auth/ResetPassword/resetPassword";
 import OTPVerification from "./Auth/OTP/otpVerification";
 import ForgotPassword from "./Auth/ForgotPassword/forgotPassword";
 import AuthPage from "./Auth/AuthPage/authForm";
 import FirstTimePassword from "./Auth/FirstTimePassword/FirstTimePassword";
 import Layout from "./components/Layout";
-import Home from "./Pages/HomePage";
 import ProfilePage from "./Pages/ProfilePage";
-import DashboardPage from "./Pages/DashboardPage";
+import DashboardRoutes from "./dashboard/routes";
 import AuthProvider from "./context/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./styles/variables.css";
@@ -24,7 +28,7 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  <Home />
+                  <Navigate to="/dashboard/documents" replace />
                 </ProtectedRoute>
               }
             />
@@ -47,11 +51,12 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* Dashboard routes */}
             <Route
-              path="/dashboard"
+              path="/dashboard/*"
               element={
                 <ProtectedRoute>
-                  <DashboardPage />
+                  <DashboardRoutes />
                 </ProtectedRoute>
               }
             />

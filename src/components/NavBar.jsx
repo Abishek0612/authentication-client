@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import logo from "../assets/logo.png";
+import logo from "../assets/logoName.png";
 
 const Navbar = () => {
   const { currentUser, logout, loading, isFirstLogin } = useAuth();
@@ -12,7 +12,7 @@ const Navbar = () => {
   const showNavigation = currentUser && !needsPasswordReset;
 
   return (
-    <nav className="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg py-4">
+    <nav className="bg-[var(--color-primary)] shadow-lg py-4">
       <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
         <Link
           to={
@@ -30,15 +30,15 @@ const Navbar = () => {
         {showNavigation && (
           <ul className="hidden md:flex space-x-6 text-white font-medium">
             <li>
-              <Link to="/" className="hover:text-indigo-200 transition">
+              <Link to="/" className="hover:text-purple-200 transition">
                 Home
               </Link>
             </li>
             <li>
               <Link
                 to="/dashboard"
-                className={`hover:text-indigo-200 transition ${
-                  location.pathname === "/dashboard"
+                className={`hover:text-purple-200 transition ${
+                  location.pathname.includes("/dashboard")
                     ? "underline font-semibold"
                     : ""
                 }`}
@@ -49,7 +49,7 @@ const Navbar = () => {
             <li>
               <Link
                 to="/profile"
-                className={`hover:text-indigo-200 transition ${
+                className={`hover:text-purple-200 transition ${
                   location.pathname === "/profile"
                     ? "underline font-semibold"
                     : ""
@@ -70,7 +70,7 @@ const Navbar = () => {
             <button
               onClick={logout}
               disabled={loading}
-              className="text-white bg-indigo-500 px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+              className="text-white bg-[var(--color-dark-purple)] cursor-pointer px-4 py-2 rounded-lg hover:bg-opacity-80 transition"
             >
               {loading ? "Loading..." : "Sign Out"}
             </button>
@@ -78,7 +78,7 @@ const Navbar = () => {
         ) : (
           <Link
             to="/login"
-            className="text-white bg-indigo-500 px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+            className="text-white bg-[var(--color-dark-purple)] px-4 py-2 rounded-lg hover:bg-opacity-80 transition"
           >
             Sign In
           </Link>
