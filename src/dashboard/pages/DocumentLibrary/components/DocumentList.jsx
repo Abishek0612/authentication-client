@@ -1,7 +1,8 @@
+// src/dashboard/pages/DocumentLibrary/components/DocumentList.jsx
 import PropTypes from "prop-types";
 import DocumentItem from "./DocumentItem";
 
-const DocumentList = ({ documents }) => {
+const DocumentList = ({ documents, onDocumentClick }) => {
   return (
     <div className="bg-white shadow overflow-hidden rounded-md">
       {/* Table Headers */}
@@ -18,7 +19,11 @@ const DocumentList = ({ documents }) => {
       {documents.length > 0 ? (
         <ul className="divide-y divide-gray-200">
           {documents.map((document) => (
-            <DocumentItem key={document.id} document={document} />
+            <DocumentItem
+              key={document.id}
+              document={document}
+              onDocumentClick={onDocumentClick}
+            />
           ))}
         </ul>
       ) : (
@@ -38,6 +43,7 @@ DocumentList.propTypes = {
       status: PropTypes.string.isRequired,
     })
   ).isRequired,
+  onDocumentClick: PropTypes.func.isRequired,
 };
 
 export default DocumentList;

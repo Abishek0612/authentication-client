@@ -10,7 +10,6 @@ const DocumentFilters = ({
   selectedDate,
   setSelectedDate,
 }) => {
-  // Document type options
   const typeOptions = [
     "All Types",
     "Invoice",
@@ -19,7 +18,6 @@ const DocumentFilters = ({
     "Report",
   ];
 
-  // Status options
   const statusOptions = [
     "All Statuses",
     "uploading",

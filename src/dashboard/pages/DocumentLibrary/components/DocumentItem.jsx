@@ -1,7 +1,8 @@
+// src/dashboard/pages/DocumentLibrary/components/DocumentItem.jsx
 import PropTypes from "prop-types";
 
-const DocumentItem = ({ document }) => {
-  const { name, type, date, status } = document;
+const DocumentItem = ({ document, onDocumentClick }) => {
+  const { id, name, type, date, status } = document;
 
   const getStatusPill = (status) => {
     switch (status) {
@@ -152,8 +153,18 @@ const DocumentItem = ({ document }) => {
     }
   };
 
+  const handleClick = () => {
+    onDocumentClick(document);
+  };
+
   return (
-    <li className="block hover:bg-gray-50">
+    <li
+      data-id={id}
+      className={`block hover:bg-gray-50 transition duration-150 ease-in-out ${
+        type.toLowerCase() === "invoice" ? "cursor-pointer" : ""
+      }`}
+      onClick={handleClick}
+    >
       {/* Mobile view */}
       <div className="block md:hidden p-4">
         <div className="flex items-center space-x-3">
@@ -170,10 +181,19 @@ const DocumentItem = ({ document }) => {
           </div>
         </div>
         <div className="mt-4 flex justify-end space-x-3">
-          <button className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]">
+          <button
+            className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDocumentClick(document);
+            }}
+          >
             View
           </button>
-          <button className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]">
+          <button
+            className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
             Download
           </button>
         </div>
@@ -195,7 +215,14 @@ const DocumentItem = ({ document }) => {
         </div>
         <div className="w-40 flex justify-center">{getStatusPill(status)}</div>
         <div className="w-32 flex justify-center space-x-2">
-          <button className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]">
+          <button
+            className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDocumentClick(document);
+            }}
+            title="View document"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4"
@@ -217,7 +244,11 @@ const DocumentItem = ({ document }) => {
               />
             </svg>
           </button>
-          <button className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]">
+          <button
+            className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+            title="Download document"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4"
@@ -233,7 +264,11 @@ const DocumentItem = ({ document }) => {
               />
             </svg>
           </button>
-          <button className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]">
+          <button
+            className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+            title="Delete document"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4"
@@ -262,7 +297,9 @@ DocumentItem.propTypes = {
     type: PropTypes.string.isRequired,
     date: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
+    file: PropTypes.object,
   }).isRequired,
+  onDocumentClick: PropTypes.func.isRequired,
 };
 
 export default DocumentItem;
