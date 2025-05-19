@@ -1,8 +1,7 @@
-// src/dashboard/pages/DocumentLibrary/components/DocumentList.jsx
 import PropTypes from "prop-types";
 import DocumentItem from "./DocumentItem";
 
-const DocumentList = ({ documents, onDocumentClick }) => {
+const DocumentList = ({ documents, onDocumentClick, onDeleteDocument }) => {
   return (
     <div className="bg-white shadow overflow-hidden rounded-md">
       {/* Table Headers */}
@@ -23,6 +22,7 @@ const DocumentList = ({ documents, onDocumentClick }) => {
               key={document.id}
               document={document}
               onDocumentClick={onDocumentClick}
+              onDeleteDocument={onDeleteDocument}
             />
           ))}
         </ul>
@@ -44,6 +44,7 @@ DocumentList.propTypes = {
     })
   ).isRequired,
   onDocumentClick: PropTypes.func.isRequired,
+  onDeleteDocument: PropTypes.func.isRequired,
 };
 
 export default DocumentList;

@@ -1,6 +1,6 @@
-// src/components/Invoice/InvoiceDataDisplay.jsx
 import { useState } from "react";
 import PropTypes from "prop-types";
+import invoiceService from "../../api/invoiceService";
 
 const InvoiceDataDisplay = ({
   invoiceData,
@@ -8,19 +8,36 @@ const InvoiceDataDisplay = ({
   onSave,
   modalMode = false,
   goBackCallback = null,
+  invoiceId = null,
 }) => {
   const [editedData, setEditedData] = useState(invoiceData);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      if (invoiceId) {
+        await invoiceService.updateInvoiceStatus(invoiceId, "approved");
+      }
+
+      onSave(editedData);
+    } catch (error) {
+      console.error("Error saving invoice data:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div
       className={modalMode ? "w-full" : "fixed inset-0 overflow-y-auto"}
       style={{ zIndex: modalMode ? "inherit" : 9999 }}
     >
-      {/* Overlay - only show if not in modal mode */}
       {!modalMode && (
         <div
           className="fixed inset-0 transition-opacity"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.3)" }}
+          onClick={onClose}
         ></div>
       )}
 
@@ -31,13 +48,13 @@ const InvoiceDataDisplay = ({
             ? "w-full h-full"
             : "flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0"
         }
+        onClick={(e) => e.stopPropagation()}
       >
         <div
           className={`relative bg-white rounded-lg shadow-xl ${
             modalMode ? "w-full" : "w-full max-w-6xl mx-auto"
           } overflow-hidden`}
         >
-          {/* Header with title and back/close buttons */}
           <div className="p-4 border-b border-gray-200 flex justify-between items-center">
             {goBackCallback ? (
               <button
@@ -137,7 +154,6 @@ const InvoiceDataDisplay = ({
                                 date: e.target.value,
                               })
                             }
-                            readOnly
                           />
                         </div>
                         <div>
@@ -154,7 +170,6 @@ const InvoiceDataDisplay = ({
                                 invoiceNumber: e.target.value,
                               })
                             }
-                            readOnly
                           />
                         </div>
                       </div>
@@ -172,7 +187,6 @@ const InvoiceDataDisplay = ({
                               totalAmount: e.target.value,
                             })
                           }
-                          readOnly
                         />
                       </div>
                     </div>
@@ -239,15 +253,45 @@ const InvoiceDataDisplay = ({
                 type="button"
                 className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
                 onClick={onClose}
+                disabled={isSaving}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                onClick={() => onSave(editedData)}
+                className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                  isSaving ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+                } cursor-pointer`}
+                onClick={handleSave}
+                disabled={isSaving}
               >
-                Save Invoice Data
+                {isSaving ? (
+                  <span className="flex items-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Saving...
+                  </span>
+                ) : (
+                  "Save Invoice Data"
+                )}
               </button>
             </div>
           </div>
@@ -277,6 +321,7 @@ InvoiceDataDisplay.propTypes = {
   onSave: PropTypes.func.isRequired,
   modalMode: PropTypes.bool,
   goBackCallback: PropTypes.func,
+  invoiceId: PropTypes.string,
 };
 
 export default InvoiceDataDisplay;

@@ -1,11 +1,10 @@
-// src/dashboard/pages/DocumentLibrary/index.jsx
 import { useState, useEffect } from "react";
 import DocumentList from "./components/DocumentList";
 import UploadModal from "./components/UploadModal";
 import DocumentFilters from "./components/DocumentFilter";
 import InvoiceDataDisplay from "../../../components/Invoice/InvoiceDataDisplay";
-import { extractInvoiceData } from "../../../components/Invoice/invoiceExtractionUtils";
 import Toast from "../../../components/Toast";
+import invoiceService from "../../../api/invoiceService";
 
 const DocumentLibrary = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -14,57 +13,46 @@ const DocumentLibrary = () => {
   const [selectedType, setSelectedType] = useState("All Types");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [selectedDate, setSelectedDate] = useState(null);
-  const [documents, setDocuments] = useState([
-    {
-      id: "inv-20250503-001",
-      name: "INV-20250503-001.pdf",
-      type: "Invoice",
-      date: "May 3, 2025",
-      status: "ocr-running",
-    },
-    {
-      id: "po-2025-0042",
-      name: "PO-2025-0042.pdf",
-      type: "Purchase Order",
-      date: "May 2, 2025",
-      status: "ocr-running",
-    },
-    {
-      id: "inv-acme-20250430",
-      name: "INV-ACME-20250430.pdf",
-      type: "Invoice",
-      date: "Apr 30, 2025",
-      status: "pending-approval",
-    },
-    {
-      id: "inv-20250425-003",
-      name: "INV-20250425-003.pdf",
-      type: "Invoice",
-      date: "Apr 25, 2025",
-      status: "approved",
-    },
-    {
-      id: "po-2025-0041",
-      name: "PO-2025-0041.pdf",
-      type: "Purchase Order",
-      date: "Apr 22, 2025",
-      status: "rejected",
-    },
-    {
-      id: "po-2025-0040",
-      name: "PO-2025-0040.pdf",
-      type: "Purchase Order",
-      date: "Apr 20, 2025",
-      status: "approved",
-    },
-  ]);
-
+  const [documents, setDocuments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeDocumentId, setActiveDocumentId] = useState(null);
   const [showInvoiceDisplay, setShowInvoiceDisplay] = useState(false);
   const [extractedInvoiceData, setExtractedInvoiceData] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Filter documents based on search, tab, and filters
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const fetchInvoices = async () => {
+    setIsLoading(true);
+    try {
+      const response = await invoiceService.getInvoices();
+      if (response.success) {
+        const transformedDocuments = response.data.map((invoice) => ({
+          id: invoice._id,
+          name: invoice.file_name,
+          type: invoice.document_type,
+          date: new Date(invoice.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
+          status: invoice.status.toLowerCase(),
+          s3Url: invoice.s3_url,
+          extractedData: invoice.invoice_data,
+        }));
+
+        setDocuments(transformedDocuments);
+      }
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      showToast("Failed to load documents. Please try again.", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch = doc.name
       .toLowerCase()
@@ -77,73 +65,98 @@ const DocumentLibrary = () => {
     const matchesStatus =
       selectedStatus === "All Statuses" || doc.status === selectedStatus;
 
-    return matchesSearch && matchesTab && matchesType && matchesStatus;
+    let matchesDate = true;
+    if (selectedDate) {
+      const docDate = new Date(doc.date);
+      const filterDate = new Date(selectedDate);
+      matchesDate = docDate.toDateString() === filterDate.toDateString();
+    }
+
+    return (
+      matchesSearch && matchesTab && matchesType && matchesStatus && matchesDate
+    );
   });
 
-  const handleUploadComplete = (uploadedFiles) => {
-    // Add the new files to the document list
-    const newDocuments = [...uploadedFiles, ...documents];
-    setDocuments(newDocuments);
+  const handleUploadComplete = () => {
+    setShowUploadModal(false);
+
+    showToast(
+      "Documents uploaded successfully. Processing will continue in the background.",
+      "success"
+    );
+
+    fetchInvoices();
   };
 
   const handleDocumentClick = async (document) => {
-    // Set the active document regardless of type
     setActiveDocumentId(document.id);
 
-    // Only process invoices
-    if (document.type.toLowerCase() !== "invoice") {
-      showToast("This document type doesn't support extraction.", "info");
-      return;
+    try {
+      const response = await invoiceService.getInvoiceById(document.id);
+
+      if (response.success) {
+        const invoice = response.data;
+
+        if (
+          invoice.invoice_data &&
+          Object.keys(invoice.invoice_data).length > 0 &&
+          !invoice.invoice_data.error
+        ) {
+          setExtractedInvoiceData({
+            imageUrl: invoice.s3_url,
+            date: invoice.invoice_data?.date || "",
+            invoiceNumber: invoice.invoice_data?.invoiceNumber || "",
+            totalAmount: invoice.invoice_data?.totalAmount || "",
+            items: invoice.invoice_data?.items || [],
+          });
+
+          setShowInvoiceDisplay(true);
+        } else if (invoice.status === "ocr-running") {
+          showToast(
+            "This invoice is still being processed. Please try again later.",
+            "info"
+          );
+        } else {
+          showToast(
+            "No extracted data available for this invoice yet.",
+            "info"
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching invoice details:", error);
+      showToast("Failed to load document details. Please try again.", "error");
     }
-
-    // If it's an invoice, extract data
-    await processInvoiceExtraction(document);
   };
-
-  // Extract data from an invoice file
-  const processInvoiceExtraction = async (document) => {
-    if (!document) return;
-
-    showToast(`Extracting data from ${document.name}...`, "info");
-
-    // Update status to OCR running
-    updateDocumentStatus(document.id, "ocr-running");
+  const handleDeleteDocument = async (documentId, e) => {
+    e.stopPropagation();
 
     try {
-      // If we have a real file, use it; otherwise use mock data
-      const data = document.file
-        ? await extractInvoiceData(document.file)
-        : await extractInvoiceData();
-
-      setExtractedInvoiceData(data);
-
-      // Update document status to approved
-      updateDocumentStatus(document.id, "approved");
-      showToast(`Data extracted successfully from ${document.name}!`);
-
-      // Show the invoice display
-      setShowInvoiceDisplay(true);
+      await invoiceService.deleteInvoice(documentId);
+      showToast("Document deleted successfully.", "success");
+      fetchInvoices();
     } catch (error) {
-      console.error("Error extracting invoice data:", error);
-      updateDocumentStatus(document.id, "pending-approval");
-      showToast(
-        `Failed to extract data from ${document.name}. Please try again.`,
-        "error"
-      );
+      console.error("Error deleting document:", error);
+      showToast("Failed to delete document. Please try again.", "error");
     }
   };
 
-  const updateDocumentStatus = (id, status) => {
-    setDocuments((prev) =>
-      prev.map((doc) => (doc.id === id ? { ...doc, status } : doc))
-    );
-  };
+  const handleSaveInvoiceData = async (data) => {
+    try {
+      setDocuments((prevDocs) =>
+        prevDocs.map((doc) =>
+          doc.id === activeDocumentId ? { ...doc, status: "approved" } : doc
+        )
+      );
 
-  const handleSaveInvoiceData = (data) => {
-    // Here you would normally save the data to your backend
-    console.log("Saving invoice data:", data);
-    setShowInvoiceDisplay(false);
-    showToast("Invoice data saved successfully!");
+      showToast("Invoice data saved successfully!", "success");
+      setShowInvoiceDisplay(false);
+
+      fetchInvoices();
+    } catch (error) {
+      console.error("Error saving invoice data:", error);
+      showToast("Failed to save invoice data. Please try again.", "error");
+    }
   };
 
   const showToast = (message, type = "success") => {
@@ -216,11 +229,20 @@ const DocumentLibrary = () => {
         setSelectedDate={setSelectedDate}
       />
 
-      {/* Document List */}
-      <DocumentList
-        documents={filteredDocuments}
-        onDocumentClick={handleDocumentClick}
-      />
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--color-primary)]"></div>
+          <span className="ml-3 text-gray-600">Loading documents...</span>
+        </div>
+      ) : (
+        /* Document List */
+        <DocumentList
+          documents={filteredDocuments}
+          onDocumentClick={handleDocumentClick}
+          onDeleteDocument={handleDeleteDocument}
+        />
+      )}
 
       {/* Upload Modal */}
       {showUploadModal && (
@@ -237,6 +259,7 @@ const DocumentLibrary = () => {
           invoiceData={extractedInvoiceData}
           onClose={() => setShowInvoiceDisplay(false)}
           onSave={handleSaveInvoiceData}
+          invoiceId={activeDocumentId}
         />
       )}
 

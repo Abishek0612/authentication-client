@@ -1,8 +1,7 @@
-// src/dashboard/pages/DocumentLibrary/components/DocumentItem.jsx
 import PropTypes from "prop-types";
 
-const DocumentItem = ({ document, onDocumentClick }) => {
-  const { id, name, type, date, status } = document;
+const DocumentItem = ({ document, onDocumentClick, onDeleteDocument }) => {
+  const { id, name, type, date, status, s3Url } = document;
 
   const getStatusPill = (status) => {
     switch (status) {
@@ -17,6 +16,19 @@ const DocumentItem = ({ document, onDocumentClick }) => {
               <circle cx="4" cy="4" r="3" />
             </svg>
             Uploading...
+          </span>
+        );
+      case "uploaded":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <svg
+              className="mr-1.5 h-2 w-2 text-gray-400"
+              fill="currentColor"
+              viewBox="0 0 8 8"
+            >
+              <circle cx="4" cy="4" r="3" />
+            </svg>
+            Uploaded
           </span>
         );
       case "ocr-running":
@@ -157,6 +169,14 @@ const DocumentItem = ({ document, onDocumentClick }) => {
     onDocumentClick(document);
   };
 
+  const handleDownload = (e) => {
+    e.stopPropagation();
+
+    if (s3Url) {
+      window.open(s3Url, "_blank");
+    }
+  };
+
   return (
     <li
       data-id={id}
@@ -192,9 +212,15 @@ const DocumentItem = ({ document, onDocumentClick }) => {
           </button>
           <button
             className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleDownload}
           >
             Download
+          </button>
+          <button
+            className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] cursor-pointer"
+            onClick={(e) => onDeleteDocument(id, e)}
+          >
+            Delete
           </button>
         </div>
       </div>
@@ -246,7 +272,7 @@ const DocumentItem = ({ document, onDocumentClick }) => {
           </button>
           <button
             className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleDownload}
             title="Download document"
           >
             <svg
@@ -266,7 +292,7 @@ const DocumentItem = ({ document, onDocumentClick }) => {
           </button>
           <button
             className="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-[var(--color-primary)] hover:bg-[var(--color-dark-purple)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => onDeleteDocument(id, e)}
             title="Delete document"
           >
             <svg
@@ -297,9 +323,11 @@ DocumentItem.propTypes = {
     type: PropTypes.string.isRequired,
     date: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
+    s3Url: PropTypes.string,
     file: PropTypes.object,
   }).isRequired,
   onDocumentClick: PropTypes.func.isRequired,
+  onDeleteDocument: PropTypes.func.isRequired,
 };
 
 export default DocumentItem;
